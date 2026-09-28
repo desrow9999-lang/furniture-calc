@@ -7,21 +7,43 @@ st.set_page_config(
     layout="centered",
 )
 
-# カスタムCSS ＆ スリープ防止（WakeLock API）
+# カスタムCSS（電卓をスマホでも強制4列にするデザイン）
 st.markdown(
     """
     <style>
     .main { background-color: #f8fafc; }
-    .stButton>button {
-        width: 100%;
-        background-color: #4f46e5;
-        color: white;
-        font-weight: bold;
-        border-radius: 12px;
-        padding: 0.8rem;
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    
+    /* 電卓ボタン用のカスタムグリッド */
+    .calc-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-width: 100%;
+        margin: 0 auto;
     }
-    .stButton>button:hover { background-color: #4338ca; color: white; }
+    .calc-row {
+        display: flex;
+        gap: 8px;
+    }
+    /* スマホでも強制的に4列均等に並べる */
+    .calc-btn-form {
+        flex: 1;
+        margin: 0 !important;
+    }
+    .calc-btn-form button {
+        width: 100% !important;
+        background-color: #4f46e5 !important;
+        color: white !important;
+        font-weight: bold !important;
+        border-radius: 10px !important;
+        padding: 0.7rem 0 !important;
+        font-size: 16px !important;
+        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+        border: none !important;
+    }
+    .calc-btn-form button:hover {
+        background-color: #4338ca !important;
+    }
     </style>
 
     <script>
@@ -29,11 +51,8 @@ st.markdown(
         try {
             if ('wakeLock' in navigator) {
                 const wakeLock = await navigator.wakeLock.request('screen');
-                console.log('Screen Wake Lock is active!');
             }
-        } catch (err) {
-            console.error(`${err.name}, ${err.message}`);
-        }
+        } catch (err) {}
     }
     requestWakeLock();
     </script>
@@ -157,7 +176,7 @@ display_text = (
 )
 st.text_input("ディスプレイ", value=display_text, disabled=True, key="disp")
 
-# ボタンの配置定義 (4列×5行)
+# ボタンレイアウト定義
 buttons = [
     ["C", "(", ")", "÷"],
     ["7", "8", "9", "×"],
@@ -166,18 +185,20 @@ buttons = [
     ["0", ".", "⌫", "="],
 ]
 
-for row in buttons:
+# カスタムCSSコンテナ内でボタンをレンダリング
+for r_idx, row in enumerate(buttons):
   cols = st.columns(4)
-  for i, btn_label in enumerate(row):
-    with cols[i]:
-      if st.button(btn_label, key=f"btn_{btn_label}_{i}"):
+  for c_idx, btn_label in enumerate(row):
+    with cols[c_idx]:
+      # 各ボタンに固有のクラスを割り当てるためのラッパー
+      st.markdown('<div class="calc-btn-form">', unsafe_allow_html=True)
+      if st.button(btn_label, key=f"btn_{r_idx}_{c_idx}"):
         if btn_label == "C":
           st.session_state.calc_expr = ""
         elif btn_label == "⌫":
           st.session_state.calc_expr = st.session_state.calc_expr[:-1]
         elif btn_label == "=":
           try:
-            # ×と÷をPythonの計算用に置換
             expr = (
                 st.session_state.calc_expr.replace("×", "*")
                 .replace("÷", "/")
@@ -190,3 +211,4 @@ for row in buttons:
         else:
           st.session_state.calc_expr += btn_label
         st.rerun()
+      st.markdown("</div>", unsafe_allow_html=True)
