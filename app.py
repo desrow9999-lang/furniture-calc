@@ -138,7 +138,7 @@ if submitted_g:
 
 st.divider()
 
-# 3. 本物のボタン式電卓（完全一体型コンポーネント）
+# 3. 本物のボタン式電卓（高さ 350 に拡大）
 st.markdown("### 🔢 3. 現場のボタン電卓")
 st.markdown(
     "<p style='font-size:11px; color:#64748b;'>ボタンをタップしてその場でサッと計算できます。</p>",
@@ -258,4 +258,4 @@ function calculate() {
 </html>
 """
 
-components.html(calc_html, height=275)
+components.html(calc_html, height=350)
