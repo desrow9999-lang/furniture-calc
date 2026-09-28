@@ -1,5 +1,6 @@
 import math
 import streamlit as st
+import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="家具の数学電卓 | 諦めてた家具、通るかも",
@@ -7,43 +8,21 @@ st.set_page_config(
     layout="centered",
 )
 
-# カスタムCSS（電卓をスマホでも強制4列にするデザイン）
+# カスタムCSS ＆ スリープ防止
 st.markdown(
     """
     <style>
     .main { background-color: #f8fafc; }
-    
-    /* 電卓ボタン用のカスタムグリッド */
-    .calc-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        max-width: 100%;
-        margin: 0 auto;
+    .stButton>button {
+        width: 100%;
+        background-color: #4f46e5;
+        color: white;
+        font-weight: bold;
+        border-radius: 12px;
+        padding: 0.8rem;
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
     }
-    .calc-row {
-        display: flex;
-        gap: 8px;
-    }
-    /* スマホでも強制的に4列均等に並べる */
-    .calc-btn-form {
-        flex: 1;
-        margin: 0 !important;
-    }
-    .calc-btn-form button {
-        width: 100% !important;
-        background-color: #4f46e5 !important;
-        color: white !important;
-        font-weight: bold !important;
-        border-radius: 10px !important;
-        padding: 0.7rem 0 !important;
-        font-size: 16px !important;
-        box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
-        border: none !important;
-    }
-    .calc-btn-form button:hover {
-        background-color: #4338ca !important;
-    }
+    .stButton>button:hover { background-color: #4338ca; color: white; }
     </style>
 
     <script>
@@ -59,10 +38,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-# 電卓用のセッション状態の初期化
-if "calc_expr" not in st.session_state:
-  st.session_state.calc_expr = ""
 
 # ヘッダー
 st.markdown(
@@ -163,52 +138,124 @@ if submitted_g:
 
 st.divider()
 
-# 3. 本物のボタン式電卓
+# 3. 本物のボタン式電卓（完全一体型コンポーネント）
 st.markdown("### 🔢 3. 現場のボタン電卓")
 st.markdown(
     "<p style='font-size:11px; color:#64748b;'>ボタンをタップしてその場でサッと計算できます。</p>",
     unsafe_allow_html=True,
 )
 
-# ディスプレイ表示
-display_text = (
-    st.session_state.calc_expr if st.session_state.calc_expr else "0"
-)
-st.text_input("ディスプレイ", value=display_text, disabled=True, key="disp")
+calc_html = """
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  .calc-box {
+    background: #1e293b;
+    padding: 12px;
+    border-radius: 14px;
+    max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  }
+  .calc-display {
+    width: 100%;
+    height: 48px;
+    background: #0f172a;
+    color: #38bdf8;
+    font-size: 22px;
+    text-align: right;
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+    font-family: monospace;
+  }
+  .calc-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .calc-btn {
+    background: #4f46e5;
+    color: white;
+    border: none;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .calc-btn:active {
+    background: #3730a3;
+  }
+  .calc-btn.op { background: #6366f1; }
+  .calc-btn.eq { background: #10b981; }
+  .calc-btn.clear { background: #ef4444; }
+</style>
+</head>
+<body>
+<div class="calc-box">
+  <div id="display" class="calc-display">0</div>
+  <div class="calc-grid">
+    <button class="calc-btn clear" onclick="appendValue('C')">C</button>
+    <button class="calc-btn op" onclick="appendValue('(')">（</button>
+    <button class="calc-btn op" onclick="appendValue(')')">）</button>
+    <button class="calc-btn op" onclick="appendValue('/')">÷</button>
+    
+    <button class="calc-btn" onclick="appendValue('7')">7</button>
+    <button class="calc-btn" onclick="appendValue('8')">8</button>
+    <button class="calc-btn" onclick="appendValue('9')">9</button>
+    <button class="calc-btn op" onclick="appendValue('*')">×</button>
+    
+    <button class="calc-btn" onclick="appendValue('4')">4</button>
+    <button class="calc-btn" onclick="appendValue('5')">5</button>
+    <button class="calc-btn" onclick="appendValue('6')">6</button>
+    <button class="calc-btn op" onclick="appendValue('-')">-</button>
+    
+    <button class="calc-btn" onclick="appendValue('1')">1</button>
+    <button class="calc-btn" onclick="appendValue('2')">2</button>
+    <button class="calc-btn" onclick="appendValue('3')">3</button>
+    <button class="calc-btn op" onclick="appendValue('+')">+</button>
+    
+    <button class="calc-btn" onclick="appendValue('0')">0</button>
+    <button class="calc-btn" onclick="appendValue('.')">.</button>
+    <button class="calc-btn clear" onclick="appendValue('BACK')">⌫</button>
+    <button class="calc-btn eq" onclick="calculate()">=</button>
+  </div>
+</div>
 
-# ボタンレイアウト定義
-buttons = [
-    ["C", "(", ")", "÷"],
-    ["7", "8", "9", "×"],
-    ["4", "5", "6", "-"],
-    ["1", "2", "3", "+"],
-    ["0", ".", "⌫", "="],
-]
+<script>
+let expression = "";
 
-# カスタムCSSコンテナ内でボタンをレンダリング
-for r_idx, row in enumerate(buttons):
-  cols = st.columns(4)
-  for c_idx, btn_label in enumerate(row):
-    with cols[c_idx]:
-      # 各ボタンに固有のクラスを割り当てるためのラッパー
-      st.markdown('<div class="calc-btn-form">', unsafe_allow_html=True)
-      if st.button(btn_label, key=f"btn_{r_idx}_{c_idx}"):
-        if btn_label == "C":
-          st.session_state.calc_expr = ""
-        elif btn_label == "⌫":
-          st.session_state.calc_expr = st.session_state.calc_expr[:-1]
-        elif btn_label == "=":
-          try:
-            expr = (
-                st.session_state.calc_expr.replace("×", "*")
-                .replace("÷", "/")
-                .replace("✕", "*")
-            )
-            res = eval(expr)
-            st.session_state.calc_expr = str(res)
-          except Exception:
-            st.session_state.calc_expr = "エラー"
-        else:
-          st.session_state.calc_expr += btn_label
-        st.rerun()
-      st.markdown("</div>", unsafe_allow_html=True)
+function appendValue(val) {
+  const display = document.getElementById('display');
+  if (val === 'C') {
+    expression = "";
+  } else if (val === 'BACK') {
+    expression = expression.slice(0, -1);
+  } else {
+    expression += val;
+  }
+  display.innerText = expression === "" ? "0" : expression;
+}
+
+function calculate() {
+  const display = document.getElementById('display');
+  try {
+    let result = eval(expression);
+    expression = String(result);
+    display.innerText = expression;
+  } catch (e) {
+    display.innerText = "エラー";
+    expression = "";
+  }
+}
+</script>
+</body>
+</html>
+"""
+
+components.html(calc_html, height=275)
