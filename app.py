@@ -157,97 +157,36 @@ display_text = (
 )
 st.text_input("ディスプレイ", value=display_text, disabled=True, key="disp")
 
-# ボタンのレイアウト (4列)
-b1, b2, b3, b4 = st.columns(4)
-with b1:
-  if st.button("C", key="btn_c"):
-    st.session_state.calc_expr = ""
-    st.rerun()
-with b2:
-  if st.button("(", key="btn_lpar"):
-    st.session_state.calc_expr += "("
-    st.rerun()
-with b3:
-  if st.button(")", key="btn_rpar"):
-    st.session_state.calc_expr += ")"
-    st.rerun()
-with b4:
-  if st.button("÷", key="btn_div"):
-    st.session_state.calc_expr += "/"
-    st.rerun()
+# ボタンの配置定義 (4列×5行)
+buttons = [
+    ["C", "(", ")", "÷"],
+    ["7", "8", "9", "×"],
+    ["4", "5", "6", "-"],
+    ["1", "2", "3", "+"],
+    ["0", ".", "⌫", "="],
+]
 
-b5, b6, b7, b8 = st.columns(4)
-with b5:
-  if st.button("7", key="btn_7"):
-    st.session_state.calc_expr += "7"
-    st.rerun()
-with b6:
-  if st.button("8", key="btn_8"):
-    st.session_state.calc_expr += "8"
-    st.rerun()
-with b7:
-  if st.button("9", key="btn_9"):
-    st.session_state.calc_expr += "9"
-    st.rerun()
-with b8:
-  if st.button("×", key="btn_mul"):
-    st.session_state.calc_expr += "*"
-    st.rerun()
-
-b9, b10, b11, b12 = st.columns(4)
-with b9:
-  if st.button("4", key="btn_4"):
-    st.session_state.calc_expr += "4"
-    st.rerun()
-with b10:
-  if st.button("5", key="btn_5"):
-    st.session_state.calc_expr += "5"
-    st.rerun()
-with b11:
-  if st.button("6", key="btn_6"):
-    st.session_state.calc_expr += "6"
-    st.rerun()
-with b12:
-  if st.button("-", key="btn_sub"):
-    st.session_state.calc_expr += "-"
-    st.rerun()
-
-b13, b14, b15, b16 = st.columns(4)
-with b13:
-  if st.button("1", key="btn_1"):
-    st.session_state.calc_expr += "1"
-    st.rerun()
-with b14:
-  if st.button("2", key="btn_2"):
-    st.session_state.calc_expr += "2"
-    st.rerun()
-with b15:
-  if st.button("3", key="btn_3"):
-    st.session_state.calc_expr += "3"
-    st.rerun()
-with b16:
-  if st.button("+", key="btn_add"):
-    st.session_state.calc_expr += "+"
-    st.rerun()
-
-b17, b18, b19, b20 = st.columns(4)
-with b17:
-  if st.button("0", key="btn_0"):
-    st.session_state.calc_expr += "0"
-    st.rerun()
-with b18:
-  if st.button(".", key="btn_dot"):
-    st.session_state.calc_expr += "."
-    st.rerun()
-with b19:
-  if st.button("⌫", key="btn_back"):
-    st.session_state.calc_expr = st.session_state.calc_expr[:-1]
-    st.rerun()
-with b20:
-  if st.button("=", key="btn_eq"):
-    try:
-      res = eval(st.session_state.calc_expr)
-      st.session_state.calc_expr = str(res)
-    except Exception:
-      st.session_state.calc_expr = "エラー"
-    st.rerun()
+for row in buttons:
+  cols = st.columns(4)
+  for i, btn_label in enumerate(row):
+    with cols[i]:
+      if st.button(btn_label, key=f"btn_{btn_label}_{i}"):
+        if btn_label == "C":
+          st.session_state.calc_expr = ""
+        elif btn_label == "⌫":
+          st.session_state.calc_expr = st.session_state.calc_expr[:-1]
+        elif btn_label == "=":
+          try:
+            # ×と÷をPythonの計算用に置換
+            expr = (
+                st.session_state.calc_expr.replace("×", "*")
+                .replace("÷", "/")
+                .replace("✕", "*")
+            )
+            res = eval(expr)
+            st.session_state.calc_expr = str(res)
+          except Exception:
+            st.session_state.calc_expr = "エラー"
+        else:
+          st.session_state.calc_expr += btn_label
+        st.rerun()
