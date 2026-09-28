@@ -7,7 +7,7 @@ st.set_page_config(
     layout="centered",
 )
 
-# プロ仕様のカスタムCSS ＆ スリープ防止（NoSleep WakeLock API）の仕込み
+# カスタムCSS ＆ スリープ防止（WakeLock API）
 st.markdown(
     """
     <style>
@@ -24,7 +24,6 @@ st.markdown(
     .stButton>button:hover { background-color: #4338ca; color: white; }
     </style>
 
-    <!-- スマホのスリープを防ぐ WakeLock API のスクリプト -->
     <script>
     async function requestWakeLock() {
         try {
@@ -58,8 +57,10 @@ st.markdown(
 
 st.divider()
 
-# タブで「搬入モード」と「隙間モード」を切り替え
-tab1, tab2 = st.tabs(["🚪 搬入・通過チェッカー", "📐 隙間・設置チェッカー"])
+# タブ構成
+tab1, tab2, tab3 = st.tabs(
+    ["🚪 搬入・通過チェッカー", "📐 隙間・設置チェッカー", "🔢 現場のメモ電卓"]
+)
 
 with tab1:
   with st.form("transport_form"):
@@ -145,3 +146,33 @@ with tab2:
           f"🔴 巾木に干渉し、**約 {abs(round(margin, 1))} cm オーバー**します。配置場所の再考が必要です。",
           unsafe_allow_html=True,
       )
+
+with tab3:
+  st.markdown("### 🔢 現場のメモ電卓")
+  st.markdown(
+      "<p style='font-size:11px; color:#64748b;'>採寸時の足し算や、ミリからセンチへの換算などにサッと使えます。</p>",
+      unsafe_allow_html=True,
+  )
+
+  calc_input = st.text_input(
+      "計算式を入力 (例: 80 + 15 - 3)", value="", placeholder="例: 120 + 45"
+  )
+  if calc_input:
+    try:
+      # 安全に数式を評価
+      # 数字と基本的な演算子のみ許可
+      allowed_chars = set("0123456789+-*/(). ")
+      if all(c in allowed_chars for c in calc_input):
+        calc_result = eval(calc_input)
+        st.metric(label="計算結果", value=f"{calc_result} cm")
+      else:
+        st.error(
+            "使用できるのは数字と四則演算子 (+, -, *, /) のみです。"
+        )
+    except Exception:
+      st.warning("正しい数式を入力してください。")
+
+  st.markdown("---")
+  st.markdown("**💡 よく使う換算メモ**")
+  st.markdown("- 10 mm = 1 cm")
+  st.markdown("- 100 cm = 1 m")
