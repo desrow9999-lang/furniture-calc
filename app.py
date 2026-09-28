@@ -44,8 +44,6 @@ st.markdown(
 # 電卓用のセッション状態の初期化
 if "calc_expr" not in st.session_state:
   st.session_state.calc_expr = ""
-if "calc_result" not in st.session_state:
-  st.session_state.calc_result = ""
 
 # ヘッダー
 st.markdown(
@@ -153,26 +151,17 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# 計算式のディスプレイ表示
-display_val = (
-    st.session_state.calc_expr
-    if st.session_state.calc_expr
-    else ("=" + str(st.session_state.calc_result) if st.session_state.calc_result !== "" else "0")
+# ディスプレイ表示
+display_text = (
+    st.session_state.calc_expr if st.session_state.calc_expr else "0"
 )
-st.text_input(
-    "ディスプレイ",
-    value=st.session_state.calc_expr if st.session_state.calc_expr else "0",
-    disabled=True,
-    key="disp",
-)
+st.text_input("ディスプレイ", value=display_text, disabled=True, key="disp")
 
 # ボタンのレイアウト (4列)
 b1, b2, b3, b4 = st.columns(4)
-
 with b1:
   if st.button("C", key="btn_c"):
     st.session_state.calc_expr = ""
-    st.session_state.calc_result = ""
     st.rerun()
 with b2:
   if st.button("(", key="btn_lpar"):
@@ -257,7 +246,6 @@ with b19:
 with b20:
   if st.button("=", key="btn_eq"):
     try:
-      # 計算実行
       res = eval(st.session_state.calc_expr)
       st.session_state.calc_expr = str(res)
     except Exception:
